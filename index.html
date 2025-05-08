@@ -79,7 +79,7 @@
             font-family: var(--font-heading);
             margin: 0;
             font-weight: bold;
-            text-shadow: 0 0 15px rgba(255, 183, 0, 0.3), 0 2px 8px rgba(0,0,0,0.18);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.18);
         }
         .dark-theme .hero-content h1 {
             color: #fff !important;
@@ -99,11 +99,7 @@
         }
         
         .scroll-indicator {
-            position: absolute;
-            bottom: auto;
-            top: calc(50% + 6rem);
-            left: 50%;
-            transform: translateX(-50%);
+            margin-top: 1.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -356,9 +352,9 @@
         <div class="hero-content">
             <h1>Hi.</h1>
             <div class="tagline">My name is Antarah Leet<br>Welcome to my portfolio</div>
-        </div>
-        <div class="scroll-indicator" id="scroll-indicator" title="Scroll down">
-            <span>&#8595;</span>
+            <div class="scroll-indicator" id="scroll-indicator" title="Scroll down">
+                <span>&#8595;</span>
+            </div>
         </div>
     </section>
     
