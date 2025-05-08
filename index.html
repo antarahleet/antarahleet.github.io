@@ -100,42 +100,25 @@
         
         .scroll-indicator {
             position: absolute;
-            bottom: 2rem;
+            bottom: auto;
+            top: calc(50% + 6rem);
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            cursor: pointer;
+            cursor: default;
             opacity: 0.92;
             z-index: 3;
             transition: opacity 0.3s;
-            background: rgba(0,0,0,0.38);
-            border-radius: 2em;
-            padding: 0.5em 1.2em 0.7em 1.2em;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.22);
+            font-size: 2rem;
+            color: #111;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-        .scroll-indicator span {
-            font-size: 1rem;
-            color: #fff;
-            font-weight: bold;
-            letter-spacing: 0.04em;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.45), 0 0 8px #000;
-        }
-        .scroll-arrow {
-            width: 28px;
-            height: 28px;
-            border-left: 5px solid #fff;
-            border-bottom: 5px solid #fff;
-            transform: rotate(-45deg);
-            margin-top: 8px;
-            animation: bounce 1.5s infinite;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.32), 0 0 8px #000;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0) rotate(-45deg); }
-            50% { transform: translateY(10px) rotate(-45deg); }
+
+        .dark-theme .scroll-indicator {
+            color: #e0e0e0;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
         
         @keyframes fadeInUp {
@@ -158,6 +141,9 @@
             .shape-3 {
                 width: 80px;
                 height: 80px;
+            }
+            .hero-content .tagline {
+                font-size: 1.125rem; /* 25% smaller than 1.5rem */
             }
         }
         
@@ -361,14 +347,18 @@
     
     <!-- New parallax hero section -->
     <section class="hero-section">
-        <img src="hero-bg.png" alt="Stickers Backdrop" class="hero-backdrop glow" id="hero-backdrop">
+        <picture>
+            <!-- Source for mobile devices -->
+            <source media="(max-width: 768px)" srcset="mobile-hero-bg.png">
+            <!-- Default image -->
+            <img src="hero-bg.png" alt="Stickers Backdrop" class="hero-backdrop glow" id="hero-backdrop">
+        </picture>
         <div class="hero-content">
             <h1>Hi.</h1>
             <div class="tagline">My name is Antarah Leet<br>Welcome to my portfolio</div>
         </div>
-        <div class="scroll-indicator" id="scroll-indicator" onclick="scrollToAbout()" title="Scroll down">
-            <span>Scroll</span>
-            <div class="scroll-arrow"></div>
+        <div class="scroll-indicator" id="scroll-indicator" title="Scroll down">
+            <span>&#8595;</span>
         </div>
     </section>
     
@@ -454,97 +444,164 @@
     </main>
     
     <script>
-    // Hero zoom scroll effect
+    window.onbeforeunload = function () {
+        window.scrollTo(0, 0);
+    };
+
     (function() {
         const backdrop = document.getElementById('hero-backdrop');
+        const heroSection = document.querySelector('.hero-section'); // For height context
         const scrollIndicator = document.getElementById('scroll-indicator');
-        let zoomState = 'zoomingOut'; // 'zoomingOut', 'lockedAfterZoomOut', 'zoomingIn', 'lockedAfterZoomIn'
-        let lastScroll = 0;
-        let progress = 0;
-        function lockScroll(e) {
-            if (zoomState === 'zoomingOut' || zoomState === 'lockedAfterZoomOut' || zoomState === 'zoomingIn' || zoomState === 'lockedAfterZoomIn') {
-                window.scrollTo(0, 0);
-                e.preventDefault();
-                return false;
-            }
-        }
-        // Lock scroll initially
-        window.scrollTo(0, 0);
-        document.body.style.overflow = 'hidden';
-        // Animate zoom on scroll
-        window.addEventListener('wheel', onZoomScroll, { passive: false });
-        window.addEventListener('touchmove', onZoomScroll, { passive: false });
-        function onZoomScroll(e) {
-            if (zoomState === 'lockedAfterZoomOut') {
-                // Unlock scroll after zoom out, on next scroll event
-                zoomState = 'idle';
-                document.body.style.overflow = '';
-                return;
-            }
-            if (zoomState === 'lockedAfterZoomIn') {
-                // Unlock scroll after zoom in, on next scroll event
-                zoomState = 'zoomingOut';
-                document.body.style.overflow = 'hidden';
-                window.scrollTo(0, 0);
-                return;
-            }
-            if (zoomState === 'idle') return;
-            e.preventDefault();
-            // Calculate scroll progress (0 to 1) based on wheel delta or touch
-            let delta = 0;
-            if (e.type === 'wheel') {
-                delta = e.deltaY;
-            } else if (e.type === 'touchmove' && e.touches && e.touches.length > 0) {
-                delta = (e.touches[0].clientY - lastScroll) * -2;
-                lastScroll = e.touches[0].clientY;
-            }
-            // Use a variable to store progress
-            progress = parseFloat(backdrop.getAttribute('data-progress') || '0');
-            if (zoomState === 'zoomingOut') {
-                progress += delta * 0.0012;
-                progress = Math.max(0, Math.min(1, progress));
-                backdrop.setAttribute('data-progress', progress);
-                const scale = 3 - 2 * progress;
-                backdrop.style.transform = `translate(-50%, -50%) scale(${scale})`;
-                if (scrollIndicator) scrollIndicator.style.opacity = progress > 0.85 ? 0.92 : 0;
-                if (progress >= 1) {
-                    zoomState = 'lockedAfterZoomOut';
-                    backdrop.style.transform = 'translate(-50%, -50%) scale(1)';
-                    if (scrollIndicator) scrollIndicator.style.opacity = 0.92;
-                }
-            } else if (zoomState === 'zoomingIn') {
-                progress -= delta * 0.0012;
-                progress = Math.max(0, Math.min(1, progress));
-                backdrop.setAttribute('data-progress', progress);
-                const scale = 3 - 2 * progress;
-                backdrop.style.transform = `translate(-50%, -50%) scale(${scale})`;
-                if (scrollIndicator) scrollIndicator.style.opacity = progress > 0.85 ? 0.92 : 0;
-                if (progress <= 0) {
-                    zoomState = 'lockedAfterZoomIn';
-                    backdrop.style.transform = 'translate(-50%, -50%) scale(3)';
-                    if (scrollIndicator) scrollIndicator.style.opacity = 0;
-                }
-            }
-        }
-        // Listen for scroll to top to trigger zoom in
-        window.addEventListener('scroll', function() {
-            if (window.scrollY === 0 && zoomState === 'idle') {
-                zoomState = 'zoomingIn';
-                document.body.style.overflow = 'hidden';
-                window.addEventListener('wheel', onZoomScroll, { passive: false });
-                window.addEventListener('touchmove', onZoomScroll, { passive: false });
-            }
-            lockScroll(event);
-        }, { passive: false });
-        // Prevent scroll until zoom is done and user scrolls again
-        window.addEventListener('scroll', lockScroll, { passive: false });
-    })();
 
-    // Your existing JavaScript
-    // Smooth scroll to about section
+        let zoomProgress = 0; // 0 (zoomed in, scale 3) to 1 (zoomed out, scale 1)
+        let isHeroZoomActive = true;
+
+        const minScale = 1;
+        const maxScale = 3;
+        // Separate sensitivities - increased by 50%
+        const mouseScrollSensitivity = 0.00075; // Was 0.0005. User confirms this is perfect.
+        const touchScrollSensitivity = 0.0045; // Was 0.00225. Increased significantly for mobile.
+
+        function updateBackdropScaleAndIndicator() {
+            const scale = maxScale - (maxScale - minScale) * zoomProgress;
+            backdrop.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+            if (scrollIndicator) {
+                if (isHeroZoomActive && zoomProgress < 0.98) { // Show if hero is active & not fully zoomed out
+                    scrollIndicator.style.opacity = 0.92;
+                } else {
+                    scrollIndicator.style.opacity = 0;
+                }
+            }
+        }
+        
+        // Initial setup
+        setTimeout(function() {
+            window.scrollTo(0, 0); // Force scroll to top first
+            document.body.style.overflow = 'hidden'; // Lock scroll
+            isHeroZoomActive = true; // Explicitly set active state
+            zoomProgress = 0; // Explicitly set zoom state
+            updateBackdropScaleAndIndicator(); // Then update visuals
+        }, 0); // 0ms delay
+
+        function handleZoomInput(rawDeltaY, isTouchEvent) { // rawDeltaY positive for scroll down / swipe down
+            if (!isHeroZoomActive) return;
+
+            const sensitivity = isTouchEvent ? touchScrollSensitivity : mouseScrollSensitivity;
+            const prevProgress = zoomProgress;
+            let newProgress = zoomProgress + rawDeltaY * sensitivity;
+            zoomProgress = Math.max(0, Math.min(1, newProgress));
+
+            updateBackdropScaleAndIndicator();
+
+            // Check for transitions AFTER updating scale
+            if (prevProgress !== zoomProgress || rawDeltaY === 0) { // If progress changed or forcing a check
+                // If at a limit and trying to exceed (or just reached limit)
+                if (zoomProgress === 1 && rawDeltaY >= 0) { // Reached 1x zoom OR trying to scroll down further
+                    if (prevProgress < 1 || rawDeltaY > 0) { // Ensure it's a move to 1 or trying to pass it
+                        isHeroZoomActive = false;
+                        document.body.style.overflow = 'auto';
+                        if (scrollIndicator) scrollIndicator.style.opacity = 0; // Explicitly hide
+                    }
+                } else if (zoomProgress === 0 && rawDeltaY < 0) {
+                    // At 3x zoom and trying to scroll up further - do nothing more
+                }
+            }
+        }
+
+        window.addEventListener('wheel', function(e) {
+            const scrollBoundaryForHeroReactivation = window.innerHeight;
+
+            if (isHeroZoomActive) {
+                e.preventDefault();
+                handleZoomInput(e.deltaY, false); // Pass false for isTouchEvent
+            } else {
+                // Check if scrolling up at the boundary to reactivate hero zoom
+                if (window.scrollY <= scrollBoundaryForHeroReactivation && e.deltaY < 0) {
+                    if ((window.scrollY + e.deltaY) <= 0 || window.scrollY === 0 && e.deltaY < 0 ) {
+                        isHeroZoomActive = true;
+                        zoomProgress = 1;
+                        document.body.style.overflow = 'hidden';
+                        window.scrollTo(0, 0);
+                        e.preventDefault();
+                        handleZoomInput(e.deltaY, false); // Pass false
+                    }
+                }
+            }
+        }, { passive: false });
+
+        let lastTouchY = null;
+        window.addEventListener('touchstart', function(e) {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            // If the touch target is the dark mode toggle or its child, let it behave normally.
+            if (darkModeToggle && darkModeToggle.contains(e.target)) {
+                return; 
+            }
+
+            if (isHeroZoomActive || window.scrollY <= window.innerHeight) {
+                lastTouchY = e.touches[0].clientY;
+                if (isHeroZoomActive) {
+                    e.preventDefault(); // Prevent default actions if hero zoom is active
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', function(e) {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            // If the touch target is the dark mode toggle or its child, allow default behavior.
+            if (darkModeToggle && darkModeToggle.contains(e.target)) {
+                return;
+            }
+
+            if (lastTouchY === null && !isHeroZoomActive) return; // Allow normal scroll if not zooming and touch didn't start on hero area
+            if (lastTouchY === null && isHeroZoomActive) { // If touchmove starts and hero is active, but no touchstart, try to capture for safety
+                 // This case is less common if touchstart correctly captures, but as a fallback.
+                if (e.touches && e.touches.length > 0) lastTouchY = e.touches[0].clientY;
+                else return; // No touch data to process
+            }
+            if (lastTouchY === null) return; // Final check if lastTouchY is still null
+
+            const currentTouchY = e.touches[0].clientY;
+            // Positive for swipe down (scroll down), Negative for swipe up (scroll up)
+            // To REVERSE for zoom: swipe down = zoom IN (decrease progress), swipe up = zoom OUT (increase progress)
+            const touchDeltaY = lastTouchY - currentTouchY; // REVERSED: Was currentTouchY - lastTouchY
+            lastTouchY = currentTouchY;
+            
+            const scrollBoundaryForHeroReactivation = window.innerHeight;
+
+            if (isHeroZoomActive) {
+                e.preventDefault();
+                handleZoomInput(touchDeltaY, true); // Pass true for isTouchEvent
+            } else {
+                // If swiping UP (touchDeltaY < 0) when at/above the main content start
+                if (window.scrollY <= scrollBoundaryForHeroReactivation && touchDeltaY < 0) {
+                    if ((window.scrollY + touchDeltaY) <= 0 || window.scrollY === 0 && touchDeltaY < 0) {
+                        isHeroZoomActive = true;
+                        zoomProgress = 1; // Start from fully zoomed-out
+                        document.body.style.overflow = 'hidden';
+                        window.scrollTo(0, 0);
+                        e.preventDefault(); // Prevent default after reactivating hero zoom
+                        handleZoomInput(touchDeltaY, true); // Pass true
+                    }
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', function() {
+            lastTouchY = null;
+        });
+        
+        // Call once on load to set initial state correctly
+        updateBackdropScaleAndIndicator(); 
+
+    })(); // End of IIFE
+
+    // Smooth scroll to about section (original function, may need adjustment if HTML onclick is kept)
+    // This will be affected by body.overflow state if called while hero is active.
     function scrollToAbout() {
         const aboutSection = document.querySelector('.about-section');
-        if (aboutSection) {
+        // Ensure hero zoom is not active and page is scrollable
+        if (aboutSection && document.body.style.overflow === 'auto') { 
             aboutSection.scrollIntoView({ behavior: 'smooth' });
         }
     }
