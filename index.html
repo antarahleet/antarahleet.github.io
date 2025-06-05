@@ -631,7 +631,7 @@
 
     function disableDarkMode() {
         body.classList.remove('dark-theme');
-        localStorage.setItem('darkMode', null);
+        localStorage.removeItem('darkMode');
         darkModeToggle.textContent = '🌙';
     }
 
