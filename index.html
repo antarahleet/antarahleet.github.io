@@ -474,7 +474,8 @@
         // Initial setup
         setTimeout(function() {
             window.scrollTo(0, 0); // Force scroll to top first
-            document.body.style.overflow = 'hidden'; // Lock scroll
+            document.body.style.overflowX = 'hidden';
+            document.body.style.overflowY = 'hidden'; // Lock scroll
             isHeroZoomActive = true; // Explicitly set active state
             zoomProgress = 0; // Explicitly set zoom state
             updateBackdropScaleAndIndicator(); // Then update visuals
@@ -496,7 +497,8 @@
                 if (zoomProgress === 1 && rawDeltaY >= 0) { // Reached 1x zoom OR trying to scroll down further
                     if (prevProgress < 1 || rawDeltaY > 0) { // Ensure it's a move to 1 or trying to pass it
                         isHeroZoomActive = false;
-                        document.body.style.overflow = 'auto';
+                        document.body.style.overflowX = 'hidden';
+                        document.body.style.overflowY = 'auto';
                         if (scrollIndicator) scrollIndicator.style.opacity = 0; // Explicitly hide
                     }
                 } else if (zoomProgress === 0 && rawDeltaY < 0) {
@@ -517,7 +519,8 @@
                     if ((window.scrollY + e.deltaY) <= 0 || window.scrollY === 0 && e.deltaY < 0 ) {
                         isHeroZoomActive = true;
                         zoomProgress = 1;
-                        document.body.style.overflow = 'hidden';
+                        document.body.style.overflowX = 'hidden';
+                        document.body.style.overflowY = 'hidden';
                         window.scrollTo(0, 0);
                         e.preventDefault();
                         handleZoomInput(e.deltaY, false); // Pass false
@@ -574,7 +577,8 @@
                     if ((window.scrollY + touchDeltaY) <= 0 || window.scrollY === 0 && touchDeltaY < 0) {
                         isHeroZoomActive = true;
                         zoomProgress = 1; // Start from fully zoomed-out
-                        document.body.style.overflow = 'hidden';
+                        document.body.style.overflowX = 'hidden';
+                        document.body.style.overflowY = 'hidden';
                         window.scrollTo(0, 0);
                         e.preventDefault(); // Prevent default after reactivating hero zoom
                         handleZoomInput(touchDeltaY, true); // Pass true
@@ -597,7 +601,7 @@
     function scrollToAbout() {
         const aboutSection = document.querySelector('.about-section');
         // Ensure hero zoom is not active and page is scrollable
-        if (aboutSection && document.body.style.overflow === 'auto') { 
+        if (aboutSection && document.body.style.overflowY === 'auto') {
             aboutSection.scrollIntoView({ behavior: 'smooth' });
         }
     }
