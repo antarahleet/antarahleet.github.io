@@ -1,692 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Antarah Leet Portfolio</title>
-    <style>
-        :root {
-            --bg-light: #fff;
-            --bg-dark: #121212;
-            --text-light: #333;
-            --text-dark: #e0e0e0;
-            --accent: #4361ee;
-            --card-light: #f8f9fa;
-            --card-dark: #1e1e1e;
-            --border-light: #e9ecef;
-            --border-dark: #333;
-            --font-heading: 'Inter', Arial, Helvetica, sans-serif;
-            --font-body: 'Open Sans', Arial, Helvetica, sans-serif;
-            --spacing: 2rem;
-        }
-        /* Core styles (unchanged) */
-        body {
-            background: var(--bg-light);
-            color: var(--text-light);
-            margin: 0;
-            font-family: var(--font-body);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        body.dark-theme {
-            background: var(--bg-dark);
-            color: var(--text-dark);
-        }
-        
-        /* New parallax hero section styles */
-        .hero-section {
-            position: relative;
-            height: 100vh;
-            width: 100%;
-            overflow: hidden;
-            background: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .hero-backdrop {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 100vh;
-            object-fit: cover;
-            transform: translate(-50%, -50%) scale(3);
-            transition: transform 0.5s cubic-bezier(.4,0,.2,1);
-            z-index: 1;
-            pointer-events: none;
-        }
-        
-        .hero-backdrop.glow {
-            box-shadow: 0 0 120px 40px rgba(255, 224, 102, 0.12), 0 0 240px 80px rgba(255, 224, 102, 0.08);
-        }
-        
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        
-        .hero-content h1 {
-            color: #111 !important;
-            font-size: 8vw;
-            font-family: var(--font-heading);
-            margin: 0;
-            font-weight: bold;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.18);
-        }
-        .dark-theme .hero-content h1 {
-            color: #fff !important;
-        }
-        .hero-content .tagline {
-            font-size: 1.5rem;
-            color: #111;
-            text-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 0 8px #fff;
-            font-family: var(--font-heading);
-            font-weight: 500;
-            margin-top: 1.5rem;
-            letter-spacing: 0.02em;
-        }
-        .dark-theme .hero-content .tagline {
-            color: #fff;
-            text-shadow: 0 2px 16px rgba(0,0,0,0.45), 0 0 8px #000;
-        }
-        
-        .scroll-indicator {
-            margin-top: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: default;
-            opacity: 0.92;
-            z-index: 3;
-            transition: opacity 0.3s;
-            font-size: 2rem;
-            color: #111;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-
-        .dark-theme .scroll-indicator {
-            color: #e0e0e0;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-        }
-        
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .shape-1 {
-                width: 100px;
-                height: 100px;
-            }
-            .shape-2 {
-                width: 60px;
-                height: 60px;
-            }
-            .shape-3 {
-                width: 80px;
-                height: 80px;
-            }
-            .hero-content .tagline {
-                font-size: 1.125rem; /* 25% smaller than 1.5rem */
-            }
-        }
-        
-        /* Dark mode toggle and other existing styles */
-        .dark-toggle {
-            position: fixed;
-            top: 1.5rem;
-            right: 2rem;
-            z-index: 1000;
-            background: var(--card-light);
-            color: var(--accent);
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            cursor: pointer;
-            font-size: 1.3rem;
-            transition: background 0.3s, color 0.3s;
-        }
-        
-        .dark-theme .dark-toggle {
-            background: var(--card-dark);
-            color: var(--accent);
-        }
-        
-        /* About Section Styles */
-        .about-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding: 2.5rem 1rem 2rem 1rem;
-            background: var(--card-light);
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-            margin-bottom: var(--spacing);
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s cubic-bezier(.4,0,.2,1), transform 0.8s cubic-bezier(.4,0,.2,1);
-        }
-        .about-content.revealed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .dark-theme .about-content {
-            background: var(--card-dark);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-        }
-        /* Projects Section Styles */
-        .projects-container {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            padding: 2rem 0;
-            gap: 2rem;
-            justify-content: center;
-            min-width: 100%;
-        }
-        .project-card {
-            flex: 0 0 300px;
-            height: 320px;
-            background-color: var(--card-light);
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            scroll-snap-align: start;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            display: flex;
-            flex-direction: column;
-        }
-        .project-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.10);
-        }
-        .dark-theme .project-card {
-            background-color: var(--card-dark);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-        }
-        .card-image {
-            position: relative;
-            overflow: hidden;
-        }
-        .card-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 0;
-        }
-        .view-project-btn {
-            position: relative;
-            z-index: 1;
-            transition: color 0.2s, background 0.2s;
-            border-radius: 4px;
-            padding: 0.2em 0.7em;
-        }
-        .view-project-btn:hover,
-        .view-project-btn:focus {
-            color: #fff !important;
-            background: var(--accent);
-            text-decoration: none;
-            outline: none;
-        }
-        .view-project-btn:focus {
-            box-shadow: 0 0 0 2px var(--accent);
-        }
-        .card-hover-info {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.82);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 1.05rem;
-            text-align: center;
-            padding: 1.2rem;
-            pointer-events: none;
-        }
-        .project-card:hover .card-hover-info {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .project-card:hover .project-screenshot {
-            opacity: 0.18;
-        }
-        .card-tech {
-            position: relative;
-            z-index: 1;
-            transition: color 0.2s, background 0.2s;
-            border-radius: 4px;
-            padding: 0.2em 0.7em;
-            cursor: pointer;
-        }
-        .card-tech:hover,
-        .card-tech:focus {
-            color: #fff !important;
-            background: #22c55e;
-            text-decoration: none;
-            outline: none;
-        }
-        .card-tech:focus {
-            box-shadow: 0 0 0 2px #22c55e;
-        }
-        .scaile-logo {
-            transform: translateY(-12px) translateX(24px);
-        }
-        /* Footer/Contact Section Styles */
-        footer.contact-section {
-            padding: var(--spacing);
-            text-align: center;
-            background: var(--card-light);
-            border-top: 1px solid var(--border-light);
-        }
-        .dark-theme footer.contact-section {
-            background: var(--card-dark);
-            border-top: 1px solid var(--border-dark);
-        }
-        /* Micro-interactions for nav-link (future use) */
-        .nav-link {
-            position: relative;
-            transition: color 0.3s ease;
-            outline: none;
-        }
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background-color: var(--accent);
-            transition: width 0.3s ease;
-        }
-        .nav-link:hover::after,
-        .nav-link:focus::after {
-            width: 100%;
-        }
-        .nav-link:focus {
-            color: var(--accent);
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
-        }
-        .projects-section {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Antarah — Futuristic Minimal</title>
+  <meta name="description" content="Antarah — futuristic minimal personal site." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
-    <button class="dark-toggle" id="dark-mode-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
-    
-    <!-- New parallax hero section -->
-    <section class="hero-section">
-        <picture>
-            <!-- Source for mobile devices -->
-            <source media="(max-width: 768px)" srcset="mobile-hero-bg.png">
-            <!-- Default image -->
-            <img src="hero-bg.png" alt="Stickers Backdrop" class="hero-backdrop glow" id="hero-backdrop">
-        </picture>
-        <div class="hero-content">
-            <h1>Hi.</h1>
-            <div class="tagline">My name is Antarah Leet<br>Welcome to my portfolio</div>
-            <div class="scroll-indicator" id="scroll-indicator" title="Scroll down">
-                <span>&#8595;</span>
-            </div>
-        </div>
+  <div class="bg-grid"></div>
+
+  <header class="hero">
+    <div class="container hero-inner">
+      <div data-reveal>
+        <div class="section-sub">ANTARAH</div>
+        <h1 class="hero-title">Futuristic. Minimal. <br>Signal > Noise.</h1>
+        <p class="hero-tag">I build clean systems and bold interfaces.</p>
+      </div>
+      <div class="hero-orb float" aria-hidden="true"></div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="container" data-reveal>
+        <h2 class="section-title">About</h2>
+        <p class="section-sub">Tech‑first, design‑minded. I ship minimal systems that feel like the future.</p>
+      </div>
     </section>
-    
-    <!-- Rest of your page content -->
-    <main>
-        <section class="about-section">
-            <div class="about-content reveal-on-scroll">
-                <img src="assets/headshot.jpg" alt="Your Name" class="headshot" style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin-bottom:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.08);background:#eee;" onerror="this.style.display='none'">
-                <h2 style="font-family:var(--font-heading);font-size:2rem;margin:0 0 0.7rem 0;font-weight:600;">About Me</h2>
-                <p class="about-text" style="max-width:500px;margin:0 auto;font-size:1.1rem;line-height:1.6;color:inherit;">Hi. I'm Antarah. I like: software development, real estate, video editing, cooking, music, the occasional video game, and good company. (in no particular order)</p>
-            </div>
-        </section>
-        <section class="projects-section">
-            <h2 style="font-family:var(--font-heading);font-size:2rem;margin-bottom:1.2rem;font-weight:600;text-align:left;">Projects</h2>
-            <div class="projects-container">
-                <div class="project-card reveal-slide">
-                    <div class="card-image" style="height:180px;background:#000;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
-                        <img src="contractROBOlogo.svg" alt="contractROBO logo" class="project-screenshot" style="max-width:100%;max-height:100%;object-fit:contain;transition:opacity 0.3s;" onerror="this.style.display='none'">
-                        <div class="card-hover-info">
-                            <p>An AI contract generation application for real estate.</p>
-                        </div>
-                    </div>
-                    <div class="card-content" style="padding:1.2rem;">
-                        <h3 style="margin:0 0 0.5rem 0;font-size:1.2rem;font-family:var(--font-heading);font-weight:600;">contractROBO</h3>
-                        <div class="card-meta" style="display:flex;justify-content:space-between;align-items:center;">
-                            <span class="card-tech" style="font-size:0.95rem;">Tech Stack</span>
-                            <a href="https://contract-ai-fawn.vercel.app" class="view-project-btn" style="color:var(--accent);text-decoration:none;font-weight:500;" target="_blank" rel="noopener">View Project</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="project-card reveal-slide">
-                    <div class="card-image" style="height:180px;background:#000;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
-                        <img src="scailelogo.svg" alt="scaile logo" class="project-screenshot scaile-logo" style="max-width:100%;max-height:100%;object-fit:contain;transition:opacity 0.3s;" onerror="this.style.display='none'">
-                        <div class="card-hover-info">
-                            <p>AI-enabled weight tracking.</p>
-                        </div>
-                    </div>
-                    <div class="card-content" style="padding:1.2rem;">
-                        <h3 style="margin:0 0 0.5rem 0;font-size:1.2rem;font-family:var(--font-heading);font-weight:600;">scaile</h3>
-                        <div class="card-meta" style="display:flex;justify-content:space-between;align-items:center;">
-                            <span class="card-tech" style="font-size:0.95rem;">Tech Stack</span>
-                            <a href="https://scaile-blush.vercel.app" class="view-project-btn" style="color:var(--accent);text-decoration:none;font-weight:500;" target="_blank" rel="noopener">View Project</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="project-card reveal-slide">
-                    <div class="card-image" style="height:180px;background:#e9ecef;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
-                        <img src="assets/projects/project3_preview.jpg" alt="This Website!" class="project-screenshot" style="max-width:100%;max-height:100%;object-fit:cover;transition:opacity 0.3s;" onerror="this.style.display='none'">
-                        <div class="card-hover-info">
-                            <p>You're already on it!</p>
-                        </div>
-                    </div>
-                    <div class="card-content" style="padding:1.2rem;">
-                        <h3 style="margin:0 0 0.5rem 0;font-size:1.2rem;font-family:var(--font-heading);font-weight:600;">(this website!)</h3>
-                        <div class="card-meta" style="display:flex;justify-content:space-between;align-items:center;">
-                            <a href="https://github.com/antarahleet/antarahleet.github.io" class="card-tech" style="font-size:0.95rem;" target="_blank" rel="noopener">Tech Stack</a>
-                            <a href="#" class="view-project-btn" style="color:var(--accent);text-decoration:none;font-weight:500;" onclick="showAlreadyHerePopup(event)">View Project</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <footer class="contact-section">
-            <h2 class="reveal-on-scroll" style="font-family:var(--font-heading);font-size:2.2rem;margin-bottom:1.1rem;font-weight:700;letter-spacing:0.01em;">Get In Touch</h2>
-            <p class="contact-text reveal-on-scroll" style="max-width:520px;margin:0 auto 2.2rem auto;font-size:1.18rem;line-height:1.7;color:inherit;">I'm open to collaboration, freelance opportunities, or just a friendly chat. Connect with me below!</p>
-            <div class="contact-links reveal-on-scroll" style="display:flex;flex-direction:column;align-items:center;gap:2.2rem;margin-bottom:0.5rem;">
-                <button type="button" onclick="window.open('https://github.com/antarahleet','_blank')" class="github-btn" style="display:flex;align-items:center;gap:0.7em;background:#2ea44f;color:#fff;font-size:1.35rem;font-weight:600;padding:0.85em 2.2em;border:none;border-radius:8px;box-shadow:0 2px 12px rgba(46,164,79,0.10);cursor:pointer;transition:background 0.18s,transform 0.12s,box-shadow 0.18s;outline:none;">
-                    <span aria-hidden="true" style="display:inline-block;vertical-align:middle;">
-                        <!-- GitHub SVG -->
-                        <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.38 9.38 0 0 1 12 6.84c.85.004 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/></svg>
-                    </span>
-                    <span>antarahleet</span>
-                </button>
-                <button type="button" onclick="window.location.href='mailto:antarahleet@gmail.com'" class="email-btn" style="display:flex;align-items:center;gap:0.7em;background:var(--accent);color:#fff;font-size:1.25rem;font-weight:500;padding:0.7em 1.5em;border:none;border-radius:7px;box-shadow:0 2px 8px rgba(67,97,238,0.08);cursor:pointer;transition:background 0.18s,transform 0.12s,box-shadow 0.18s;outline:none;">
-                    <span aria-hidden="true" style="display:inline-block;vertical-align:middle;">
-                        <!-- Email SVG -->
-                        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6 12 13 2 6"/></svg>
-                    </span>
-                    <span>antarahleet@gmail.com</span>
-                </button>
-            </div>
-        </footer>
-    </main>
-    
-    <script>
-    window.onbeforeunload = function () {
-        window.scrollTo(0, 0);
-    };
 
-    (function() {
-        const backdrop = document.getElementById('hero-backdrop');
-        const heroSection = document.querySelector('.hero-section'); // For height context
-        const scrollIndicator = document.getElementById('scroll-indicator');
+    <section>
+      <div class="container" data-reveal>
+        <h2 class="section-title">Focus</h2>
+        <div class="cards">
+          <div class="card glass">
+            <h3>Systems</h3>
+            <p>Automation, orchestration, intelligent pipelines.</p>
+          </div>
+          <div class="card glass">
+            <h3>Interfaces</h3>
+            <p>Minimal UX with bold, cinematic motion.</p>
+          </div>
+          <div class="card glass">
+            <h3>Signal</h3>
+            <p>Fast, clear, data‑driven decisions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        let zoomProgress = 0; // 0 (zoomed in, scale 3) to 1 (zoomed out, scale 1)
-        let isHeroZoomActive = true;
+    <section>
+      <div class="container" data-reveal>
+        <h2 class="section-title">Selected Geometry</h2>
+        <div class="gallery">
+          <div class="polaroid glass">
+            <div class="thumb"></div>
+            <div class="label">Neon grid studies</div>
+          </div>
+          <div class="polaroid glass">
+            <div class="thumb"></div>
+            <div class="label">Glass UI fragments</div>
+          </div>
+          <div class="polaroid glass">
+            <div class="thumb"></div>
+            <div class="label">Retro‑future gradients</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        const minScale = 1;
-        const maxScale = 3;
-        // Separate sensitivities - increased by 50%
-        const mouseScrollSensitivity = 0.00075; // Was 0.0005. User confirms this is perfect.
-        const touchScrollSensitivity = 0.0045; // Was 0.00225. Increased significantly for mobile.
+    <section>
+      <div class="container" data-reveal>
+        <h2 class="section-title">Contact</h2>
+        <div class="contact-wrap glass">
+          <div class="form-row">
+            <input type="text" placeholder="Name" disabled>
+            <input type="email" placeholder="Email" disabled>
+            <textarea rows="4" placeholder="Message" disabled></textarea>
+            <button disabled>Coming Soon</button>
+          </div>
+          <div class="small">Contact form coming soon.</div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-        function updateBackdropScaleAndIndicator() {
-            const scale = maxScale - (maxScale - minScale) * zoomProgress;
-            backdrop.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  <footer>
+    <div class="container">© Antarah — Miami‑Vice‑grade minimalism.</div>
+  </footer>
 
-            if (scrollIndicator) {
-                if (isHeroZoomActive && zoomProgress < 0.98) { // Show if hero is active & not fully zoomed out
-                    scrollIndicator.style.opacity = 0.92;
-                } else {
-                    scrollIndicator.style.opacity = 0;
-                }
-            }
-        }
-        
-        // Initial setup
-        setTimeout(function() {
-            window.scrollTo(0, 0); // Force scroll to top first
-            document.body.style.overflowX = 'hidden';
-            document.body.style.overflowY = 'hidden'; // Lock scroll
-            isHeroZoomActive = true; // Explicitly set active state
-            zoomProgress = 0; // Explicitly set zoom state
-            updateBackdropScaleAndIndicator(); // Then update visuals
-        }, 0); // 0ms delay
-
-        function handleZoomInput(rawDeltaY, isTouchEvent) { // rawDeltaY positive for scroll down / swipe down
-            if (!isHeroZoomActive) return;
-
-            const sensitivity = isTouchEvent ? touchScrollSensitivity : mouseScrollSensitivity;
-            const prevProgress = zoomProgress;
-            let newProgress = zoomProgress + rawDeltaY * sensitivity;
-            zoomProgress = Math.max(0, Math.min(1, newProgress));
-
-            updateBackdropScaleAndIndicator();
-
-            // Check for transitions AFTER updating scale
-            if (prevProgress !== zoomProgress || rawDeltaY === 0) { // If progress changed or forcing a check
-                // If at a limit and trying to exceed (or just reached limit)
-                if (zoomProgress === 1 && rawDeltaY >= 0) { // Reached 1x zoom OR trying to scroll down further
-                    if (prevProgress < 1 || rawDeltaY > 0) { // Ensure it's a move to 1 or trying to pass it
-                        isHeroZoomActive = false;
-                        document.body.style.overflowX = 'hidden';
-                        document.body.style.overflowY = 'auto';
-                        if (scrollIndicator) scrollIndicator.style.opacity = 0; // Explicitly hide
-                    }
-                } else if (zoomProgress === 0 && rawDeltaY < 0) {
-                    // At 3x zoom and trying to scroll up further - do nothing more
-                }
-            }
-        }
-
-        window.addEventListener('wheel', function(e) {
-            const scrollBoundaryForHeroReactivation = window.innerHeight;
-
-            if (isHeroZoomActive) {
-                e.preventDefault();
-                handleZoomInput(e.deltaY, false); // Pass false for isTouchEvent
-            } else {
-                // Check if scrolling up at the boundary to reactivate hero zoom
-                if (window.scrollY <= scrollBoundaryForHeroReactivation && e.deltaY < 0) {
-                    if ((window.scrollY + e.deltaY) <= 0 || window.scrollY === 0 && e.deltaY < 0 ) {
-                        isHeroZoomActive = true;
-                        zoomProgress = 1;
-                        document.body.style.overflowX = 'hidden';
-                        document.body.style.overflowY = 'hidden';
-                        window.scrollTo(0, 0);
-                        e.preventDefault();
-                        handleZoomInput(e.deltaY, false); // Pass false
-                    }
-                }
-            }
-        }, { passive: false });
-
-        let lastTouchY = null;
-        window.addEventListener('touchstart', function(e) {
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            // If the touch target is the dark mode toggle or its child, let it behave normally.
-            if (darkModeToggle && darkModeToggle.contains(e.target)) {
-                return; 
-            }
-
-            if (isHeroZoomActive || window.scrollY <= window.innerHeight) {
-                lastTouchY = e.touches[0].clientY;
-                if (isHeroZoomActive) {
-                    e.preventDefault(); // Prevent default actions if hero zoom is active
-                }
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchmove', function(e) {
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            // If the touch target is the dark mode toggle or its child, allow default behavior.
-            if (darkModeToggle && darkModeToggle.contains(e.target)) {
-                return;
-            }
-
-            if (lastTouchY === null && !isHeroZoomActive) return; // Allow normal scroll if not zooming and touch didn't start on hero area
-            if (lastTouchY === null && isHeroZoomActive) { // If touchmove starts and hero is active, but no touchstart, try to capture for safety
-                 // This case is less common if touchstart correctly captures, but as a fallback.
-                if (e.touches && e.touches.length > 0) lastTouchY = e.touches[0].clientY;
-                else return; // No touch data to process
-            }
-            if (lastTouchY === null) return; // Final check if lastTouchY is still null
-
-            const currentTouchY = e.touches[0].clientY;
-            // Positive for swipe down (scroll down), Negative for swipe up (scroll up)
-            // To REVERSE for zoom: swipe down = zoom IN (decrease progress), swipe up = zoom OUT (increase progress)
-            const touchDeltaY = lastTouchY - currentTouchY; // REVERSED: Was currentTouchY - lastTouchY
-            lastTouchY = currentTouchY;
-            
-            const scrollBoundaryForHeroReactivation = window.innerHeight;
-
-            if (isHeroZoomActive) {
-                e.preventDefault();
-                handleZoomInput(touchDeltaY, true); // Pass true for isTouchEvent
-            } else {
-                // If swiping UP (touchDeltaY < 0) when at/above the main content start
-                if (window.scrollY <= scrollBoundaryForHeroReactivation && touchDeltaY < 0) {
-                    if ((window.scrollY + touchDeltaY) <= 0 || window.scrollY === 0 && touchDeltaY < 0) {
-                        isHeroZoomActive = true;
-                        zoomProgress = 1; // Start from fully zoomed-out
-                        document.body.style.overflowX = 'hidden';
-                        document.body.style.overflowY = 'hidden';
-                        window.scrollTo(0, 0);
-                        e.preventDefault(); // Prevent default after reactivating hero zoom
-                        handleZoomInput(touchDeltaY, true); // Pass true
-                    }
-                }
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchend', function() {
-            lastTouchY = null;
-        });
-        
-        // Call once on load to set initial state correctly
-        updateBackdropScaleAndIndicator(); 
-
-    })(); // End of IIFE
-
-    // Smooth scroll to about section (original function, may need adjustment if HTML onclick is kept)
-    // This will be affected by body.overflow state if called while hero is active.
-    function scrollToAbout() {
-        const aboutSection = document.querySelector('.about-section');
-        // Ensure hero zoom is not active and page is scrollable
-        if (aboutSection && document.body.style.overflowY === 'auto') {
-            aboutSection.scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-
-    // Dark mode toggle logic
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const body = document.body;
-
-    // Check for saved user preference
-    if (localStorage.getItem('darkMode') === 'enabled') {
-        enableDarkMode();
-    }
-
-    darkModeToggle.addEventListener('click', () => {
-        if (body.classList.contains('dark-theme')) {
-            disableDarkMode();
-        } else {
-            enableDarkMode();
-        }
-    });
-
-    function enableDarkMode() {
-        body.classList.add('dark-theme');
-        localStorage.setItem('darkMode', 'enabled');
-        darkModeToggle.textContent = '☀️';
-    }
-
-    function disableDarkMode() {
-        body.classList.remove('dark-theme');
-        localStorage.removeItem('darkMode');
-        darkModeToggle.textContent = '🌙';
-    }
-
-    // Set correct icon on load
-    if (body.classList.contains('dark-theme')) {
-        darkModeToggle.textContent = '☀️';
-    } else {
-        darkModeToggle.textContent = '🌙';
-    }
-
-    // Scroll-triggered fade-in animation for about section
-    document.addEventListener('DOMContentLoaded', function() {
-        const animatedElements = document.querySelectorAll('.reveal-on-scroll');
-        if ('IntersectionObserver' in window) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('revealed');
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.15 });
-            animatedElements.forEach(element => {
-                observer.observe(element);
-            });
-        } else {
-            // Fallback for browsers that don't support IntersectionObserver
-            animatedElements.forEach(el => el.classList.add('revealed'));
-        }
-    });
-
-    // Popup for 'this website' project card
-    function showAlreadyHerePopup(e) {
-        e.preventDefault();
-        alert("You've already reached your destination.");
-    }
-
-    // Add button press effect for both buttons
-    function addPressEffect(btn, shadowColor) {
-        if (!btn) return;
-        btn.addEventListener('mousedown', () => {
-            btn.style.transform = 'scale(0.96)';
-            btn.style.boxShadow = shadowColor;
-        });
-        btn.addEventListener('mouseup', () => {
-            btn.style.transform = '';
-            btn.style.boxShadow = '';
-        });
-        btn.addEventListener('mouseleave', () => {
-            btn.style.transform = '';
-            btn.style.boxShadow = '';
-        });
-    }
-    addPressEffect(document.querySelector('.github-btn'), '0 1px 4px rgba(46,164,79,0.14)');
-    addPressEffect(document.querySelector('.email-btn'), '0 1px 4px rgba(67,97,238,0.14)');
-    </script>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>
