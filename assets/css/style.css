@@ -128,4 +128,5 @@ footer{padding:40px 0 60px; color:var(--muted); text-align:center}
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
+  .hero-orb{animation: spin 22s linear infinite !important;}
 }
