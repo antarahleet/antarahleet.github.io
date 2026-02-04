@@ -43,8 +43,13 @@ section{padding:120px 0; position:relative}
 .hero-title{font-size:clamp(2.8rem, 6vw, 5rem); letter-spacing:0.02em}
 .hero-tag{font-size:clamp(1rem, 2vw, 1.4rem); color:var(--muted)}
 
-.hero-orb{
+.hero-orb-wrap{
   width:min(520px, 80vw); aspect-ratio:1; border-radius:50%;
+  display:grid; place-items:center;
+  animation: float 12s ease-in-out infinite;
+}
+.hero-orb{
+  width:100%; height:100%; border-radius:50%;
   background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0.02) 45%, rgba(0,0,0,0) 65%),
               conic-gradient(from 0deg, rgba(255,255,255,0) 0deg, rgba(255,255,255,0.6) 12deg, rgba(255,255,255,0) 24deg, rgba(255,255,255,0) 360deg),
               conic-gradient(from 180deg, rgba(255,79,216,0.85), rgba(0,229,255,0.75), rgba(110,92,255,0.95), rgba(255,139,61,0.75), rgba(255,79,216,0.85));
@@ -52,7 +57,7 @@ section{padding:120px 0; position:relative}
   box-shadow: inset 0 0 80px rgba(255,255,255,.25), 0 40px 120px rgba(0,0,0,.6);
   position:relative;
   transform: translateZ(0);
-  animation: spin 22s linear infinite, float 12s ease-in-out infinite;
+  animation: spin 22s linear infinite;
 }
 .hero-orb::before{
   content:""; position:absolute; inset:-6%; border-radius:50%;
