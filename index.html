@@ -3,96 +3,821 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Antarah — Futuristic Minimal</title>
-  <meta name="description" content="Antarah — futuristic minimal personal site." />
+  <title>antarahleet</title>
+  <meta name="description" content="antarahleet" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --fg: #ededed;
+      --dim: #666;
+      --faint: #222;
+      --serif: 'Instrument Serif', Georgia, serif;
+      --sans: 'Inter', system-ui, sans-serif;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html.light {
+      --bg: #f5f5f0;
+      --fg: #111;
+      --dim: #555;
+      --faint: #bbb;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    /* Scroll container */
+    .scroll-space { height: 400vh; }
+
+    .viewport {
+      position: fixed;
+      inset: 0;
+      display: flex;
+    }
+
+    /* Full-viewport canvas */
+    #sphere {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* ─── Left panel ─── */
+
+    .left-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 clamp(2rem, 5vw, 8rem);
+      z-index: 1;
+    }
+
+    .hero-name {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(2.5rem, 5.5vw, 6rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--fg);
+      overflow: hidden;
+    }
+
+    .hero-name span {
+      display: inline-block;
+      position: relative;
+      padding-bottom: 6px;
+    }
+
+    .hero-name svg {
+      position: absolute;
+      bottom: 0;
+      left: -2%;
+      width: 104%;
+      height: 16px;
+      overflow: visible;
+    }
+
+    .hero-name path {
+      fill: none;
+      stroke: var(--fg);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      transition: stroke-dashoffset 0.6s var(--ease);
+    }
+
+    .hero-name span:hover path { stroke-dashoffset: 0; }
+
+    .hero-sub {
+      margin-top: 1.25rem;
+      font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+      font-weight: 400;
+      color: var(--dim);
+      line-height: 1.6;
+    }
+
+    .hero-links {
+      margin-top: 2rem;
+      display: flex;
+      gap: 2rem;
+    }
+
+    .hero-links a {
+      font-size: 0.85rem;
+      color: var(--dim);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: color 0.25s;
+    }
+
+    .hero-links a:hover { color: var(--fg); }
+
+    /* Text starts invisible on desktop — canvas characters are the visual */
+    .hero-text-hidden { opacity: 0; }
+    .hero-text-visible { opacity: 1; transition: opacity 0.3s; }
+
+    /* Character spans for measurement */
+    .char { display: inline-block; }
+
+    /* ─── Right panel ─── */
+
+    .right-panel {
+      width: 50%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 clamp(2rem, 4vw, 6rem);
+      z-index: 1;
+    }
+
+    .form-container {
+      max-width: 400px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+    }
+
+    .form-container.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .form-container .contact-label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      margin-bottom: 2.5rem;
+    }
+
+    .form-container form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .field {
+      position: relative;
+      border-bottom: 1px solid var(--faint);
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--fg);
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      padding: 1.1rem 0;
+      outline: none;
+    }
+
+    .field textarea {
+      resize: none;
+      min-height: 100px;
+      line-height: 1.6;
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: var(--dim);
+      opacity: 0.5;
+    }
+
+    .field::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0;
+      width: 0; height: 1px;
+      background: var(--fg);
+      transition: width 0.4s var(--ease);
+    }
+
+    .field:focus-within::after { width: 100%; }
+
+    .submit-row { margin-top: 2rem; }
+
+    .submit-btn {
+      background: transparent;
+      color: var(--fg);
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 0; border: none;
+      cursor: pointer;
+      position: relative;
+      padding-bottom: 4px;
+    }
+
+    .submit-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 1px;
+      background: var(--dim);
+      transition: background 0.3s var(--ease);
+    }
+
+    .submit-btn:hover::after { background: var(--fg); }
+
+    .success-msg {
+      margin-top: 1.25rem;
+      font-size: 0.85rem;
+      color: var(--dim);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .success-msg.show { opacity: 1; }
+
+    /* ─── Light switch ─── */
+
+    .switch {
+      position: fixed;
+      top: 2rem;
+      left: clamp(2rem, 5vw, 8rem);
+      z-index: 10;
+      width: 52px;
+      height: 28px;
+      background: var(--faint);
+      border: 2px solid var(--dim);
+      border-radius: 14px;
+      cursor: pointer;
+      padding: 3px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease 1s forwards;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .switch-knob {
+      width: 18px;
+      height: 18px;
+      background: var(--fg);
+      border-radius: 50%;
+      transition: transform 0.35s var(--ease), background 0.3s;
+      transform: translateX(0);
+    }
+
+    html.light .switch-knob { transform: translateX(22px); }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    /* ─── Scroll hint ─── */
+
+    .scroll-hint {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      opacity: 0;
+      animation: fadeIn 0.8s ease 1.5s forwards;
+      transition: opacity 0.4s;
+    }
+
+    .scroll-hint.hidden { opacity: 0 !important; }
+
+    .scroll-hint span {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 24px;
+      background: linear-gradient(to bottom, var(--dim), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+      50% { opacity: 1; transform: scaleY(1); }
+    }
+
+    /* ─── Mobile ─── */
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes revealLine {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .scroll-space { height: auto; }
+      .viewport {
+        position: relative;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      #sphere, #mobile-sphere, .scroll-hint { display: none !important; }
+
+      /* ── Hero ── */
+      .left-panel {
+        width: 100%;
+        min-height: 100svh;
+        padding: 0 1.75rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+      }
+
+      .hero-name {
+        font-size: clamp(2.8rem, 12vw, 4.5rem);
+        letter-spacing: -0.04em;
+      }
+
+      .hero-text-hidden {
+        opacity: 0;
+        animation: fadeUp 0.9s var(--ease) forwards;
+      }
+
+      #hero-name { animation-delay: 0.3s; }
+
+      /* Accent line under name */
+      .hero-name span::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 48px;
+        height: 2px;
+        background: var(--fg);
+        transform-origin: left;
+        transform: scaleX(0);
+        animation: revealLine 0.6s var(--ease) 1s forwards;
+      }
+
+      #hero-sub {
+        animation-delay: 0.6s;
+        margin-top: 1.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      #hero-links {
+        animation-delay: 0.9s;
+        margin-top: 2.5rem;
+        gap: 1.75rem;
+      }
+
+      .hero-links a {
+        font-size: 0.9rem;
+        position: relative;
+      }
+
+      .hero-links a::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: var(--dim);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s var(--ease);
+      }
+
+      .hero-links a:hover::after,
+      .hero-links a:active::after {
+        transform: scaleX(1);
+      }
+
+      /* ── Divider ── */
+      .right-panel::before {
+        content: '';
+        display: block;
+        width: 32px;
+        height: 1px;
+        background: var(--faint);
+        margin-bottom: 3rem;
+      }
+
+      /* ── Contact ── */
+      .right-panel {
+        width: 100%;
+        padding: 4rem 1.75rem 5rem;
+      }
+
+      .form-container {
+        max-width: 100%;
+        opacity: 0;
+        transform: none;
+      }
+
+      .form-container.mobile-visible {
+        animation: fadeUp 0.8s var(--ease) forwards;
+      }
+
+      .contact-label {
+        font-size: 0.65rem !important;
+        margin-bottom: 2rem !important;
+      }
+
+      .field input, .field textarea {
+        font-size: 1rem;
+        padding: 1rem 0;
+      }
+
+      .submit-btn {
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+      }
+
+      /* ── Switch ── */
+      .switch {
+        position: fixed;
+        top: 1.5rem;
+        left: 1.75rem;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="bg-grid"></div>
 
-  <header class="hero">
-    <div class="container hero-inner">
-      <div data-reveal>
-        <div class="section-sub">ANTARAH</div>
-        <h1 class="hero-title">Futuristic. Minimal. <br>Signal > Noise.</h1>
-        <p class="hero-tag">I build clean systems and bold interfaces.</p>
+  <div class="switch" id="switch" role="button" aria-label="Toggle light mode" tabindex="0">
+    <div class="switch-knob"></div>
+  </div>
+
+  <div class="scroll-hint" id="scroll-hint">
+    <span>scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+
+  <canvas id="sphere"></canvas>
+
+  <div class="scroll-space">
+    <div class="viewport">
+
+      <div class="left-panel" id="left-panel">
+        <h1 class="hero-name hero-text-hidden" id="hero-name"><span>antarahleet<svg viewBox="0 0 300 20" preserveAspectRatio="none"><path d="M2,8 C20,6 45,9 80,7 S140,10 180,8 S240,11 260,12 C275,14 290,18 298,22" /></svg></span></h1>
+        <p class="hero-sub hero-text-hidden" id="hero-sub">Human taste, machine pace.</p>
+        <div class="hero-links hero-text-hidden" id="hero-links">
+          <a href="mailto:hello@antarahleet.com" id="link-email">Email</a>
+          <a href="https://github.com/antarahleet" target="_blank" rel="noopener" id="link-github">GitHub</a>
+        </div>
       </div>
-      <div class="hero-orb-wrap" aria-hidden="true">
-        <div class="hero-orb"></div>
+
+      <div class="right-panel">
+        <div class="form-container" id="form-container">
+          <p class="contact-label">Get in touch</p>
+          <form id="contact-form" action="https://formspree.io/f/mreoglvw" method="POST">
+            <div class="field">
+              <input type="text" name="name" placeholder="Name" required autocomplete="name" />
+            </div>
+            <div class="field">
+              <input type="email" name="email" placeholder="Email" required autocomplete="email" />
+            </div>
+            <div class="field">
+              <textarea name="message" placeholder="Message" required></textarea>
+            </div>
+            <div class="submit-row">
+              <button class="submit-btn" type="submit">Send message</button>
+            </div>
+          </form>
+          <p class="success-msg" id="success-msg">Sent. I'll be in touch.</p>
+        </div>
       </div>
+
     </div>
-  </header>
+  </div>
 
-  <main>
-    <section>
-      <div class="container" data-reveal>
-        <h2 class="section-title">About</h2>
-        <p class="section-sub">Tech‑first, design‑minded. I ship minimal systems that feel like the future.</p>
-      </div>
-    </section>
+<script>
+const canvas = document.getElementById('sphere');
+const ctx = canvas.getContext('2d');
+const scrollHint = document.getElementById('scroll-hint');
+const formContainer = document.getElementById('form-container');
+const SYMBOLS = '{}[]<>/=+—*@#$%&!?;:.0123456789abcdef∆∑∏λπΩ∞≈≠±÷×αβγδ';
 
-    <section>
-      <div class="container" data-reveal>
-        <h2 class="section-title">Focus</h2>
-        <div class="cards">
-          <div class="card glass">
-            <h3>Systems</h3>
-            <p>Automation, orchestration, intelligent pipelines.</p>
-          </div>
-          <div class="card glass">
-            <h3>Interfaces</h3>
-            <p>Minimal UX with bold, cinematic motion.</p>
-          </div>
-          <div class="card glass">
-            <h3>Signal</h3>
-            <p>Fast, clear, data‑driven decisions.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+function clamp01(t) { return Math.min(Math.max(t, 0), 1); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
-    <section>
-      <div class="container" data-reveal>
-        <h2 class="section-title">Selected Geometry</h2>
-        <div class="gallery">
-          <div class="polaroid glass">
-            <div class="thumb"></div>
-            <div class="label">Neon grid studies</div>
-          </div>
-          <div class="polaroid glass">
-            <div class="thumb"></div>
-            <div class="label">Glass UI fragments</div>
-          </div>
-          <div class="polaroid glass">
-            <div class="thumb"></div>
-            <div class="label">Retro‑future gradients</div>
-          </div>
-        </div>
-      </div>
-    </section>
+function getProgress() {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  return clamp01(window.scrollY / max);
+}
 
-    <section>
-      <div class="container" data-reveal>
-        <h2 class="section-title">Contact</h2>
-        <div class="contact-wrap glass">
-          <div class="form-row">
-            <input type="text" placeholder="Name" disabled>
-            <input type="email" placeholder="Email" disabled>
-            <textarea rows="4" placeholder="Message" disabled></textarea>
-            <button disabled>Coming Soon</button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+// ─── Measure real text character positions from the DOM ───
 
-  <footer>
-    <div class="container">© Antarah</div>
-  </footer>
+function measureTextElements() {
+  const targets = [];
 
-  <script src="assets/js/main.js?v=2"></script>
+  const groups = [
+    { el: document.querySelector('#hero-name > span'), font: 'name' },
+    { el: document.getElementById('hero-sub'), font: 'sub' },
+    { el: document.getElementById('link-email'), font: 'link' },
+    { el: document.getElementById('link-github'), font: 'link' },
+  ];
+
+  groups.forEach(group => {
+    const el = group.el;
+    // Get only direct text content (skip SVG for the name)
+    let textContent;
+    if (group.font === 'name') {
+      textContent = 'antarahleet';
+    } else {
+      textContent = el.textContent;
+    }
+
+    // Temporarily make visible for measurement
+    el.closest('.hero-text-hidden')?.classList.add('hero-text-visible');
+
+    // Wrap each character in a span for measurement
+    const originalHTML = el.innerHTML;
+    const svgMatch = originalHTML.match(/<svg[\s\S]*<\/svg>/);
+    const chars = textContent.split('');
+
+    el.innerHTML = chars.map(ch =>
+      ch === ' ' ? ' ' : `<span class="char">${ch}</span>`
+    ).join('') + (svgMatch ? svgMatch[0] : '');
+
+    // Measure each character span
+    const spans = el.querySelectorAll('.char');
+    spans.forEach((span, i) => {
+      const rect = span.getBoundingClientRect();
+      targets.push({
+        char: chars[i + (chars.indexOf(' ') < i ? 0 : 0)],
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+        font: group.font,
+      });
+    });
+
+    // Restore original HTML
+    el.innerHTML = originalHTML;
+    el.closest('.hero-text-visible')?.classList.remove('hero-text-visible');
+    el.closest('.hero-text-hidden')?.classList.remove('hero-text-visible');
+  });
+
+  return targets;
+}
+
+// ─── Build characters ───
+
+let chars = [];
+let textTargets = [];
+let measured = false;
+const EXTRA_DECORATIVE = 60;
+
+function buildChars() {
+  textTargets = measureTextElements();
+  const TOTAL = textTargets.length + EXTRA_DECORATIVE;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+  chars = [];
+  for (let i = 0; i < TOTAL; i++) {
+    const theta = Math.acos(1 - 2 * (i + 0.5) / TOTAL);
+    const phi = goldenAngle * i;
+
+    const isText = i < textTargets.length;
+    const target = isText ? textTargets[i] : null;
+    const char = isText ? target.char : SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+
+    // Stagger: text chars transition based on their vertical position
+    const transitionStart = isText
+      ? 0.15 + (target.y / window.innerHeight) * 0.25
+      : 0.2 + Math.random() * 0.25;
+
+    chars.push({
+      char,
+      theta,
+      phi,
+      target,
+      transitionStart,
+      transitionDur: 0.2 + Math.random() * 0.1,
+      // Decorative scatter direction
+      scatterAngle: Math.random() * Math.PI * 2,
+      scatterDist: 1 + Math.random() * 1.5,
+    });
+  }
+  measured = true;
+}
+
+// ─── Resize ───
+
+function resizeCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// ─── Render ───
+
+let time = 0;
+let lastFrame = 0;
+let prevWidth = 0;
+
+function render(now) {
+  requestAnimationFrame(render);
+  if (window.innerWidth <= 768) return;
+
+  const dt = lastFrame ? (now - lastFrame) / 1000 : 0.016;
+  lastFrame = now;
+  time += dt;
+
+  // Remeasure if window resized
+  if (window.innerWidth !== prevWidth) {
+    prevWidth = window.innerWidth;
+    resizeCanvas();
+    buildChars();
+  }
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const progress = getProgress();
+
+  const styles = getComputedStyle(document.documentElement);
+  const fg = styles.getPropertyValue('--fg').trim();
+  const dim = styles.getPropertyValue('--dim').trim();
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Sphere center — right side of screen
+  const cx = w * 0.75;
+  const cy = h * 0.5;
+  const sphereR = Math.min(w * 0.25, h * 0.3);
+
+  // Rotation slows as characters start moving
+  const rotSpeed = Math.max(0, 1 - progress * 4);
+  const rotAngle = time * 0.5 * rotSpeed;
+
+  // Font map
+  const fontMap = {
+    name: `400 ${getComputedStyle(document.getElementById('hero-name')).fontSize} 'Instrument Serif', Georgia, serif`,
+    sub: `400 ${getComputedStyle(document.getElementById('hero-sub')).fontSize} 'Inter', sans-serif`,
+    link: `400 ${getComputedStyle(document.getElementById('link-email')).fontSize} 'Inter', sans-serif`,
+  };
+
+  const sorted = chars.map(c => {
+    const sx = Math.sin(c.theta) * Math.cos(c.phi + rotAngle);
+    const sy = Math.cos(c.theta);
+    const sz = Math.sin(c.theta) * Math.sin(c.phi + rotAngle);
+
+    const sphereX = cx + sx * sphereR;
+    const sphereY = cy + sy * sphereR;
+
+    const t = clamp01((progress - c.transitionStart) / c.transitionDur);
+    const et = easeInOutCubic(t);
+
+    let x, y, opacity, scale, font;
+
+    if (c.target) {
+      // Text character: sphere → exact DOM position
+      x = lerp(sphereX, c.target.x, et);
+      y = lerp(sphereY, c.target.y, et);
+      opacity = lerp(0.2 + sz * 0.3, 1.0, et);
+      scale = lerp(0.5, 1.0, et);
+      font = fontMap[c.target.font] || fontMap.sub;
+    } else {
+      // Decorative: sphere → scatter and fade
+      const scX = cx + Math.cos(c.scatterAngle) * sphereR * c.scatterDist * 2;
+      const scY = cy + Math.sin(c.scatterAngle) * sphereR * c.scatterDist * 2;
+      x = lerp(sphereX, scX, et);
+      y = lerp(sphereY, scY, et);
+      opacity = lerp(0.15 + sz * 0.25, 0, et);
+      scale = lerp(0.5, 0.1, et);
+      font = `400 14px 'Inter', monospace`;
+    }
+
+    return { ...c, x, y, opacity, scale, z: sz, font };
+  });
+
+  sorted.sort((a, b) => a.z - b.z);
+
+  for (const c of sorted) {
+    if (c.opacity <= 0.01) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.min(c.opacity, 1);
+    if (c.target) {
+      ctx.font = c.font;
+    } else {
+      const fs = Math.max(3, Math.round(14 * c.scale));
+      ctx.font = `400 ${fs}px 'Inter', monospace`;
+    }
+    ctx.fillStyle = c.target ? fg : dim;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(c.char, c.x, c.y);
+    ctx.restore();
+  }
+
+  // Crossfade: once text chars have settled, show real DOM text, hide canvas
+  const settled = clamp01((progress - 0.5) / 0.15);
+  canvas.style.opacity = 1 - settled;
+
+  document.querySelectorAll('.hero-text-hidden').forEach(el => {
+    if (settled > 0.5) {
+      el.classList.add('hero-text-visible');
+    } else {
+      el.classList.remove('hero-text-visible');
+    }
+  });
+
+  // Show contact form
+  if (progress > 0.35) {
+    formContainer.classList.add('visible');
+  } else {
+    formContainer.classList.remove('visible');
+  }
+
+  // Scroll hint
+  if (progress > 0.05) {
+    scrollHint.classList.add('hidden');
+  } else {
+    scrollHint.classList.remove('hidden');
+  }
+}
+
+// ─── Init ───
+
+document.fonts.ready.then(() => {
+  if (window.innerWidth > 768) {
+    prevWidth = window.innerWidth;
+    resizeCanvas();
+    buildChars();
+  }
+  requestAnimationFrame(render);
+});
+
+// ─── Light switch ───
+
+const sw = document.getElementById('switch');
+if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
+sw.addEventListener('click', () => {
+  document.documentElement.classList.toggle('light');
+  localStorage.setItem('theme',
+    document.documentElement.classList.contains('light') ? 'light' : 'dark'
+  );
+  // Remeasure after theme change
+  if (window.innerWidth > 768) buildChars();
+});
+
+// ─── Contact form ───
+
+const form = document.getElementById('contact-form');
+const msg = document.getElementById('success-msg');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    });
+    form.reset();
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 5000);
+  } catch (err) {}
+});
+
+// ─── Mobile: reveal form on scroll ───
+if (window.innerWidth <= 768) {
+  const fc = document.getElementById('form-container');
+  const observer = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) {
+      fc.classList.add('mobile-visible');
+      observer.disconnect();
+    }
+  }, { threshold: 0.1 });
+  observer.observe(fc);
+}
+</script>
+
 </body>
 </html>
