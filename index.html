@@ -123,14 +123,26 @@
       color: var(--dim);
       text-decoration: none;
       letter-spacing: 0.02em;
-      transition: color 0.25s;
+      transition: color 0.25s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-block;
+      will-change: transform;
     }
 
     .hero-links a:hover { color: var(--fg); }
 
-    /* Text starts invisible on desktop — canvas characters are the visual */
+    /* Text stays invisible on desktop — canvas IS the final render */
     .hero-text-hidden { opacity: 0; }
     .hero-text-visible { opacity: 1; transition: opacity 0.3s; }
+
+    /* Interactive overlay — text invisible but links/SVG underlines still work */
+    .hero-text-interactive {
+      opacity: 1;
+      color: transparent !important;
+      transition: opacity 0.3s;
+    }
+    .hero-text-interactive a { color: transparent !important; }
+    .hero-text-interactive svg { visibility: visible; }
+    .hero-text-interactive path { stroke: var(--fg); }
 
     /* Character spans for measurement */
     .char { display: inline-block; }
@@ -277,6 +289,23 @@
     }
 
     html.light .switch-knob { transform: translateX(22px); }
+
+    /* ─── Theme ripple via View Transitions API ─── */
+
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none !important;
+      mix-blend-mode: normal;
+    }
+
+    ::view-transition-old(root) {
+      z-index: 999;
+      /* Start fully visible — animation will shrink the clip-path */
+    }
+
+    ::view-transition-new(root) {
+      z-index: 1;
+    }
 
     @keyframes fadeIn { to { opacity: 1; } }
 
@@ -484,9 +513,9 @@
     <div class="viewport">
 
       <div class="left-panel" id="left-panel">
-        <h1 class="hero-name hero-text-hidden" id="hero-name"><span>antarahleet<svg viewBox="0 0 300 20" preserveAspectRatio="none"><path d="M2,8 C20,6 45,9 80,7 S140,10 180,8 S240,11 260,12 C275,14 290,18 298,22" /></svg></span></h1>
-        <p class="hero-sub hero-text-hidden" id="hero-sub">Human taste, machine pace.</p>
-        <div class="hero-links hero-text-hidden" id="hero-links">
+        <h1 class="hero-name hero-text-hidden" id="hero-name" data-hero-text><span>antarahleet<svg viewBox="0 0 300 20" preserveAspectRatio="none"><path d="M2,8 C20,6 45,9 80,7 S140,10 180,8 S240,11 260,12 C275,14 290,18 298,22" /></svg></span></h1>
+        <p class="hero-sub hero-text-hidden" id="hero-sub" data-hero-text>Human taste, machine pace.</p>
+        <div class="hero-links hero-text-hidden" id="hero-links" data-hero-text>
           <a href="mailto:hello@antarahleet.com" id="link-email">Email</a>
           <a href="https://github.com/antarahleet" target="_blank" rel="noopener" id="link-github">GitHub</a>
         </div>
@@ -527,61 +556,72 @@ function clamp01(t) { return Math.min(Math.max(t, 0), 1); }
 function lerp(a, b, t) { return a + (b - a) * t; }
 function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2; }
 
-function getProgress() {
+function getRawProgress() {
   const max = document.documentElement.scrollHeight - window.innerHeight;
   return clamp01(window.scrollY / max);
 }
 
-// ─── Measure real text character positions from the DOM ───
+// ─── Smooth scroll progress ───
+let smoothProgress = 0;
+function updateSmoothProgress(dt) {
+  const raw = getRawProgress();
+  smoothProgress += (raw - smoothProgress) * (1 - Math.exp(-6 * dt));
+  if (Math.abs(raw - smoothProgress) < 0.0005) smoothProgress = raw;
+  return smoothProgress;
+}
 
-function measureTextElements() {
+// ─── Mouse tracking for magnetic links ───
+let mouseX = -1000, mouseY = -1000;
+document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+
+// ─── Canvas-native text measurement ───
+
+function measureTextOnCanvas() {
   const targets = [];
 
   const groups = [
-    { el: document.querySelector('#hero-name > span'), font: 'name' },
-    { el: document.getElementById('hero-sub'), font: 'sub' },
-    { el: document.getElementById('link-email'), font: 'link' },
-    { el: document.getElementById('link-github'), font: 'link' },
+    { text: 'antarahleet', font: 'name', el: document.getElementById('hero-name') },
+    { text: 'Human taste, machine pace.', font: 'sub', el: document.getElementById('hero-sub') },
+    { text: 'Email', font: 'link', el: document.getElementById('link-email') },
+    { text: 'GitHub', font: 'link', el: document.getElementById('link-github') },
   ];
 
+  const nameEl = document.getElementById('hero-name');
+  const subEl = document.getElementById('hero-sub');
+  const linkEl = document.getElementById('link-email');
+
+  const fontMap = {
+    name: `400 ${getComputedStyle(nameEl).fontSize} 'Instrument Serif', Georgia, serif`,
+    sub: `400 ${getComputedStyle(subEl).fontSize} 'Inter', sans-serif`,
+    link: `400 ${getComputedStyle(linkEl).fontSize} 'Inter', sans-serif`,
+  };
+
   groups.forEach(group => {
-    const el = group.el;
-    // Get only direct text content (skip SVG for the name)
-    let textContent;
-    if (group.font === 'name') {
-      textContent = 'antarahleet';
-    } else {
-      textContent = el.textContent;
+    const rect = group.el.getBoundingClientRect();
+    const canvasFont = fontMap[group.font];
+
+    ctx.save();
+    ctx.font = canvasFont;
+
+    const chars = [...group.text];
+    const charWidths = chars.map(ch => ctx.measureText(ch).width);
+
+    let cursorX = rect.left;
+    const centerY = rect.top + rect.height / 2;
+
+    for (let i = 0; i < chars.length; i++) {
+      const charW = charWidths[i];
+      targets.push({
+        char: chars[i],
+        x: cursorX + charW / 2,
+        y: centerY,
+        font: group.font,
+        canvasFont,
+      });
+      cursorX += charW;
     }
 
-    // Temporarily make visible for measurement
-    el.closest('.hero-text-hidden')?.classList.add('hero-text-visible');
-
-    // Wrap each character in a span for measurement
-    const originalHTML = el.innerHTML;
-    const svgMatch = originalHTML.match(/<svg[\s\S]*<\/svg>/);
-    const chars = textContent.split('');
-
-    el.innerHTML = chars.map(ch =>
-      ch === ' ' ? ' ' : `<span class="char">${ch}</span>`
-    ).join('') + (svgMatch ? svgMatch[0] : '');
-
-    // Measure each character span
-    const spans = el.querySelectorAll('.char');
-    spans.forEach((span, i) => {
-      const rect = span.getBoundingClientRect();
-      targets.push({
-        char: chars[i + (chars.indexOf(' ') < i ? 0 : 0)],
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-        font: group.font,
-      });
-    });
-
-    // Restore original HTML
-    el.innerHTML = originalHTML;
-    el.closest('.hero-text-visible')?.classList.remove('hero-text-visible');
-    el.closest('.hero-text-hidden')?.classList.remove('hero-text-visible');
+    ctx.restore();
   });
 
   return targets;
@@ -591,11 +631,10 @@ function measureTextElements() {
 
 let chars = [];
 let textTargets = [];
-let measured = false;
 const EXTRA_DECORATIVE = 60;
 
 function buildChars() {
-  textTargets = measureTextElements();
+  textTargets = measureTextOnCanvas();
   const TOTAL = textTargets.length + EXTRA_DECORATIVE;
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
@@ -608,24 +647,18 @@ function buildChars() {
     const target = isText ? textTargets[i] : null;
     const char = isText ? target.char : SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
 
-    // Stagger: text chars transition based on their vertical position
     const transitionStart = isText
-      ? 0.15 + (target.y / window.innerHeight) * 0.25
-      : 0.2 + Math.random() * 0.25;
+      ? 0.05 + (target.y / window.innerHeight) * 0.15
+      : 0.05 + Math.random() * 0.15;
 
     chars.push({
-      char,
-      theta,
-      phi,
-      target,
+      char, theta, phi, target,
       transitionStart,
-      transitionDur: 0.2 + Math.random() * 0.1,
-      // Decorative scatter direction
+      transitionDur: 0.6 + Math.random() * 0.3,
       scatterAngle: Math.random() * Math.PI * 2,
       scatterDist: 1 + Math.random() * 1.5,
     });
   }
-  measured = true;
 }
 
 // ─── Resize ───
@@ -651,7 +684,6 @@ function render(now) {
   lastFrame = now;
   time += dt;
 
-  // Remeasure if window resized
   if (window.innerWidth !== prevWidth) {
     prevWidth = window.innerWidth;
     resizeCanvas();
@@ -660,7 +692,7 @@ function render(now) {
 
   const w = window.innerWidth;
   const h = window.innerHeight;
-  const progress = getProgress();
+  const progress = updateSmoothProgress(dt);
 
   const styles = getComputedStyle(document.documentElement);
   const fg = styles.getPropertyValue('--fg').trim();
@@ -668,16 +700,13 @@ function render(now) {
 
   ctx.clearRect(0, 0, w, h);
 
-  // Sphere center — right side of screen
   const cx = w * 0.75;
   const cy = h * 0.5;
   const sphereR = Math.min(w * 0.25, h * 0.3);
 
-  // Rotation slows as characters start moving
   const rotSpeed = Math.max(0, 1 - progress * 4);
   const rotAngle = time * 0.5 * rotSpeed;
 
-  // Font map
   const fontMap = {
     name: `400 ${getComputedStyle(document.getElementById('hero-name')).fontSize} 'Instrument Serif', Georgia, serif`,
     sub: `400 ${getComputedStyle(document.getElementById('hero-sub')).fontSize} 'Inter', sans-serif`,
@@ -698,14 +727,24 @@ function render(now) {
     let x, y, opacity, scale, font;
 
     if (c.target) {
-      // Text character: sphere → exact DOM position
       x = lerp(sphereX, c.target.x, et);
       y = lerp(sphereY, c.target.y, et);
       opacity = lerp(0.2 + sz * 0.3, 1.0, et);
       scale = lerp(0.5, 1.0, et);
       font = fontMap[c.target.font] || fontMap.sub;
+
+      // Magnetic pull for link characters when settled
+      if (c.target.font === 'link' && et > 0.9) {
+        const dx = mouseX - x;
+        const dy = mouseY - y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 80) {
+          const pull = (1 - dist / 80) * 0.35;
+          x += dx * pull;
+          y += dy * pull;
+        }
+      }
     } else {
-      // Decorative: sphere → scatter and fade
       const scX = cx + Math.cos(c.scatterAngle) * sphereR * c.scatterDist * 2;
       const scY = cy + Math.sin(c.scatterAngle) * sphereR * c.scatterDist * 2;
       x = lerp(sphereX, scX, et);
@@ -737,31 +776,24 @@ function render(now) {
     ctx.restore();
   }
 
-  // Crossfade: once text chars have settled, show real DOM text, hide canvas
-  const settled = clamp01((progress - 0.5) / 0.15);
-  canvas.style.opacity = 1 - settled;
-
-  document.querySelectorAll('.hero-text-hidden').forEach(el => {
-    if (settled > 0.5) {
-      el.classList.add('hero-text-visible');
+  // No crossfade — canvas characters ARE the final text.
+  // Enable DOM overlay for hover/click once settled.
+  const settled = clamp01((progress - 0.45) / 0.1);
+  document.querySelectorAll('[data-hero-text]').forEach(el => {
+    if (settled > 0.9) {
+      el.classList.add('hero-text-interactive');
+      el.classList.remove('hero-text-hidden');
     } else {
-      el.classList.remove('hero-text-visible');
+      el.classList.remove('hero-text-interactive');
+      if (!el.classList.contains('hero-text-hidden')) el.classList.add('hero-text-hidden');
     }
   });
 
-  // Show contact form
-  if (progress > 0.35) {
-    formContainer.classList.add('visible');
-  } else {
-    formContainer.classList.remove('visible');
-  }
+  if (progress > 0.35) formContainer.classList.add('visible');
+  else formContainer.classList.remove('visible');
 
-  // Scroll hint
-  if (progress > 0.05) {
-    scrollHint.classList.add('hidden');
-  } else {
-    scrollHint.classList.remove('hidden');
-  }
+  if (progress > 0.05) scrollHint.classList.add('hidden');
+  else scrollHint.classList.remove('hidden');
 }
 
 // ─── Init ───
@@ -775,17 +807,54 @@ document.fonts.ready.then(() => {
   requestAnimationFrame(render);
 });
 
-// ─── Light switch ───
+// ─── Light switch with ripple ───
 
 const sw = document.getElementById('switch');
+let rippling = false;
+
 if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
-sw.addEventListener('click', () => {
+
+function applyThemeToggle() {
   document.documentElement.classList.toggle('light');
   localStorage.setItem('theme',
     document.documentElement.classList.contains('light') ? 'light' : 'dark'
   );
-  // Remeasure after theme change
   if (window.innerWidth > 768) buildChars();
+}
+
+sw.addEventListener('click', () => {
+  if (rippling) return;
+
+  const rect = sw.getBoundingClientRect();
+  const originX = rect.left + rect.width / 2;
+  const originY = rect.top + rect.height / 2;
+  const maxDist = Math.hypot(
+    Math.max(originX, window.innerWidth - originX),
+    Math.max(originY, window.innerHeight - originY)
+  );
+
+  if (document.startViewTransition) {
+    rippling = true;
+    const transition = document.startViewTransition(() => applyThemeToggle());
+
+    transition.ready.then(() => {
+      const anim = document.documentElement.animate(
+        { clipPath: [
+          `circle(${maxDist}px at ${originX}px ${originY}px)`,
+          `circle(0px at ${originX}px ${originY}px)`,
+        ]},
+        {
+          duration: 600,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          pseudoElement: '::view-transition-old(root)',
+          fill: 'forwards',
+        }
+      );
+      anim.finished.then(() => { rippling = false; });
+    });
+  } else {
+    applyThemeToggle();
+  }
 });
 
 // ─── Contact form ───
