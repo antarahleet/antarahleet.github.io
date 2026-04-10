@@ -56,6 +56,19 @@
       pointer-events: none;
     }
 
+    /* Scroll-linked grain overlay */
+    #grain {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      opacity: 0;
+    }
+    html.light #grain { mix-blend-mode: multiply; }
+
     /* ─── Left panel ─── */
 
     .left-panel {
@@ -76,33 +89,6 @@
       color: var(--fg);
       overflow: hidden;
     }
-
-    .hero-name span {
-      display: inline-block;
-      position: relative;
-      padding-bottom: 6px;
-    }
-
-    .hero-name svg {
-      position: absolute;
-      bottom: 0;
-      left: -2%;
-      width: 104%;
-      height: 16px;
-      overflow: visible;
-    }
-
-    .hero-name path {
-      fill: none;
-      stroke: var(--fg);
-      stroke-width: 2.5;
-      stroke-linecap: round;
-      stroke-dasharray: 1000;
-      stroke-dashoffset: 1000;
-      transition: stroke-dashoffset 0.6s var(--ease);
-    }
-
-    .hero-name span:hover path { stroke-dashoffset: 0; }
 
     .hero-sub {
       margin-top: 1.25rem;
@@ -134,15 +120,13 @@
     .hero-text-hidden { opacity: 0; }
     .hero-text-visible { opacity: 1; transition: opacity 0.3s; }
 
-    /* Interactive overlay — text invisible but links/SVG underlines still work */
+    /* Interactive overlay — text invisible, links remain clickable */
     .hero-text-interactive {
       opacity: 1;
       color: transparent !important;
       transition: opacity 0.3s;
     }
     .hero-text-interactive a { color: transparent !important; }
-    .hero-text-interactive svg { visibility: visible; }
-    .hero-text-interactive path { stroke: var(--fg); }
 
     /* Character spans for measurement */
     .char { display: inline-block; }
@@ -509,11 +493,19 @@
 
   <canvas id="sphere"></canvas>
 
+  <svg id="grain" xmlns="http://www.w3.org/2000/svg">
+    <filter id="grain-filter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#grain-filter)"/>
+  </svg>
+
   <div class="scroll-space">
     <div class="viewport">
 
       <div class="left-panel" id="left-panel">
-        <h1 class="hero-name hero-text-hidden" id="hero-name" data-hero-text><span>antarahleet<svg viewBox="0 0 300 20" preserveAspectRatio="none"><path d="M2,8 C20,6 45,9 80,7 S140,10 180,8 S240,11 260,12 C275,14 290,18 298,22" /></svg></span></h1>
+        <h1 class="hero-name hero-text-hidden" id="hero-name" data-hero-text>antarahleet</h1>
         <p class="hero-sub hero-text-hidden" id="hero-sub" data-hero-text>Human taste, machine pace.</p>
         <div class="hero-links hero-text-hidden" id="hero-links" data-hero-text>
           <a href="mailto:hello@antarahleet.com" id="link-email">Email</a>
@@ -550,6 +542,7 @@ const canvas = document.getElementById('sphere');
 const ctx = canvas.getContext('2d');
 const scrollHint = document.getElementById('scroll-hint');
 const formContainer = document.getElementById('form-container');
+const grain = document.getElementById('grain');
 const SYMBOLS = '{}[]<>/=+—*@#$%&!?;:.0123456789abcdef∆∑∏λπΩ∞≈≠±÷×αβγδ';
 
 function clamp01(t) { return Math.min(Math.max(t, 0), 1); }
@@ -718,8 +711,18 @@ function render(now) {
     const sy = Math.cos(c.theta);
     const sz = Math.sin(c.theta) * Math.sin(c.phi + rotAngle);
 
-    const sphereX = cx + sx * sphereR;
-    const sphereY = cy + sy * sphereR;
+    let sphereX = cx + sx * sphereR;
+    let sphereY = cy + sy * sphereR;
+
+    // Cursor repulsion on the globe (only meaningful while still on the sphere)
+    const dxs = sphereX - mouseX;
+    const dys = sphereY - mouseY;
+    const distS = Math.hypot(dxs, dys);
+    if (distS < 120 && distS > 0.001) {
+      const push = (1 - distS / 120) * 25;
+      sphereX += (dxs / distS) * push;
+      sphereY += (dys / distS) * push;
+    }
 
     const t = clamp01((progress - c.transitionStart) / c.transitionDur);
     const et = easeInOutCubic(t);
@@ -742,6 +745,17 @@ function render(now) {
           const pull = (1 - dist / 80) * 0.35;
           x += dx * pull;
           y += dy * pull;
+        }
+      }
+
+      // Letter hover lift on the settled name
+      if (c.target.font === 'name' && et > 0.9) {
+        const dx = mouseX - x;
+        const dy = mouseY - y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 50) {
+          const lift = (1 - dist / 50) * 12;
+          y -= lift;
         }
       }
     } else {
@@ -794,6 +808,9 @@ function render(now) {
 
   if (progress > 0.05) scrollHint.classList.add('hidden');
   else scrollHint.classList.remove('hidden');
+
+  // Scroll-linked grain — gentle baseline, intensifies with scroll
+  grain.style.opacity = (0.04 + progress * 0.12).toFixed(3);
 }
 
 // ─── Init ───
@@ -806,6 +823,22 @@ document.fonts.ready.then(() => {
   }
   requestAnimationFrame(render);
 });
+
+// ─── Console easter egg ───
+
+console.log(
+  `%c
+   ┌─────────────────────────────────────┐
+   │                                     │
+   │     a n t a r a h l e e t           │
+   │                                     │
+   └─────────────────────────────────────┘
+
+   hey, curious dev. nice to see you here.
+   say hi → hello@antarahleet.com
+  `,
+  'font-family: monospace; color: #888; line-height: 1.4;'
+);
 
 // ─── Light switch with ripple ───
 
